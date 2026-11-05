@@ -22,12 +22,15 @@ jobs:
 
       - name: Get taglib from the original author
         run: |
-          git config submodule.third-party/taglib.url https://github.com/rRemix/taglib.git
-          git submodule update --init --recursive || true
-          if [ -z "$(ls -A third-party/taglib 2>/dev/null)" ]; then
-            rm -rf third-party/taglib
-            git clone --recursive https://github.com/rRemix/taglib.git third-party/taglib
+          SHA=$(git rev-parse HEAD:third-party/taglib 2>/dev/null || true)
+          rm -rf third-party/taglib
+          git clone https://github.com/rRemix/taglib.git third-party/taglib
+          if [ -n "$SHA" ]; then
+            git -C third-party/taglib checkout "$SHA" || echo "Pinned version not found, using latest main"
           fi
+          git -C third-party/taglib submodule update --init --recursive
+          ls -la third-party/taglib
+          test -f third-party/taglib/build.gradle.kts
 
       - name: Setup JDK 17
         uses: actions/setup-java@v4
