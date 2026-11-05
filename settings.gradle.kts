@@ -23,7 +23,3 @@ dependencyResolutionManagement {
 
 rootProject.name = "APlayer"
 include(":app")
-include(":baselineprofile")
-include(":feature_smb")
-include(":taglib")
-project(":taglib").projectDir = file("third-party/taglib")

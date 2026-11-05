@@ -64,7 +64,7 @@ open class BaseActivity : ComponentActivity(), CoroutineScope by MainScope() {
   var pendingWriteRequest: PendingWriteRequest? = null
 
   override fun onCreate(savedInstanceState: Bundle?) {
-    hasPermission = PermissionUtil.hasNecessaryPermission()
+    hasPermission = PermissionUtil.hasNecessaryPermission(this)
     //严格模式
     if (BuildConfig.DEBUG) {
 //      StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder()
@@ -167,6 +167,16 @@ open class BaseActivity : ComponentActivity(), CoroutineScope by MainScope() {
 
   override fun attachBaseContext(newBase: Context) {
     super.attachBaseContext(setLocal(newBase))
+  }
+
+  override fun getDisplay(): android.view.Display {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+      val disp = runCatching { super.getDisplay() }.getOrNull()
+      if (disp != null) return disp
+    }
+    val wm = getSystemService(Context.WINDOW_SERVICE) as android.view.WindowManager
+    @Suppress("DEPRECATION")
+    return wm.defaultDisplay
   }
 
   companion object {

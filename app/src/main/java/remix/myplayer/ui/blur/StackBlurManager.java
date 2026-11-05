@@ -101,9 +101,7 @@ public class StackBlurManager {
    * Process the image using a native library
    */
   public Bitmap processNatively(int radius) {
-    NativeBlurProcess blur = new NativeBlurProcess();
-    _result = blur.blur(_image, radius);
-    return _result;
+    return process(radius);
   }
 
 

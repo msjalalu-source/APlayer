@@ -1,6 +1,3 @@
-import java.io.FileInputStream
-import java.util.Properties
-
 plugins {
     alias(libs.plugins.application)
     alias(libs.plugins.kotlin.serialization)
@@ -8,36 +5,13 @@ plugins {
     alias(libs.plugins.room)
     alias(libs.plugins.hilt)
     alias(libs.plugins.compose.compiler)
-    alias(libs.plugins.baselineprofile)
 }
 
-fun readProperties(file: File): Properties {
-    val properties = Properties()
-    var stream: FileInputStream? = null
-    try {
-        stream = FileInputStream(file)
-        properties.load(stream)
-    } catch (throwable: Throwable) {
-        logger.warn("Fail to read properties from file $file: $throwable")
-    } finally {
-        stream?.close()
-    }
-    return properties
-}
-
-val properties = readProperties(rootProject.file("local.properties"))
-
-kotlin {
-    compilerOptions {
-        freeCompilerArgs.addAll(listOf("-module-name", "remix.myplayer"))
-    }
-}
 
 android {
     namespace = "remix.myplayer"
 
     compileSdk = 36
-    ndkVersion = "28.2.13676358"
 
     defaultConfig {
         applicationId = "remix.myplayer"
@@ -49,30 +23,11 @@ android {
 
         vectorDrawables.useSupportLibrary = true
 
-        buildConfigField(
-            "String",
-            "LASTFM_API_KEY",
-            "\"${properties.getProperty("LASTFM_API_KEY")}\""
-        )
-        buildConfigField(
-            "String",
-            "GOOGLE_PLAY_LICENSE_KEY",
-            "\"${properties.getProperty("GOOGLE_PLAY_LICENSE_KEY")}\""
-        )
-//        buildConfigField(
-//            "String",
-//            "GITHUB_SHA",
-//            "\"${System.getenv("GITHUB_SHA")}\""
-//        )
-
-        ndk {
-            abiFilters += listOf(
-                "armeabi-v7a",
-                "arm64-v8a",
-//                "x86",
-                "x86_64"
-            )
-        }
+        buildConfigField("String", "LASTFM_API_KEY", "\"\"")
+        buildConfigField("String", "GOOGLE_PLAY_LICENSE_KEY", "\"\"")
+        buildConfigField("String", "BUGLY_APP_ID", "\"\"")
+        buildConfigField("String", "FLAVOR", "\"foss\"")
+        buildConfigField("boolean", "ENABLE_UPDATE", "false")
     }
 
     androidResources {
@@ -89,32 +44,29 @@ android {
 
     signingConfigs {
         create("debugConfig") {
-            storeFile = project.file("Debug.jks")
-            storePassword = "123456"
-            keyAlias = "Debug"
-            keyPassword = "123456"
+            storeFile = file("${rootDir}/debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
         }
 
         create("releaseConfig") {
-            storeFile = File(properties.getProperty("keystore.storeFile") ?: "")
-            storePassword = properties.getProperty("keystore.storePassword")
-            keyAlias = properties.getProperty("keystore.keyAlias")
-            keyPassword = properties.getProperty("keystore.keyPassword")
+            storeFile = file("${rootDir}/debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
         }
     }
 
     buildTypes {
         debug {
-            signingConfig = signingConfigs["debugConfig"]
+            signingConfig = signingConfigs.getByName("debugConfig")
             isDebuggable = true
             isMinifyEnabled = false
-
-            applicationIdSuffix = ".debug"
-            versionNameSuffix = "-DEBUG"
         }
 
         release {
-            signingConfig = signingConfigs["releaseConfig"]
+            signingConfig = signingConfigs.getByName("releaseConfig")
             isDebuggable = false
             isMinifyEnabled = true
             isShrinkResources = true
@@ -124,35 +76,6 @@ android {
                     "proguard-rules.pro"
                 )
             )
-        }
-    }
-
-    externalNativeBuild {
-        cmake {
-            path("CMakeLists.txt")
-            version = "4.1.2"
-        }
-    }
-
-    flavorDimensions += "distribution"
-    productFlavors {
-        create("normal") {
-            dimension = "distribution"
-            buildConfigField(
-                "String",
-                "BUGLY_APP_ID",
-                "\"${properties.getProperty("BUGLY_APP_ID")}\""
-            )
-            buildConfigField("boolean", "ENABLE_UPDATE", "true")
-        }
-        create("foss") {
-            dimension = "distribution"
-            isDefault = true
-            buildConfigField("boolean", "ENABLE_UPDATE", "false")
-        }
-        create("google") {
-            dimension = "distribution"
-            buildConfigField("boolean", "ENABLE_UPDATE", "false")
         }
     }
 
@@ -172,54 +95,19 @@ android {
         viewBinding = true
         compose = true
     }
-    // composeOptions {
-    //     kotlinCompilerExtensionVersion = "1.5.13"
-    // }
+
     dependenciesInfo {
         includeInApk = false
     }
 
-    dynamicFeatures += setOf(":feature_smb")
-
     room {
         schemaDirectory("$projectDir/schemas")
     }
-}
 
-androidComponents {
-    onVariants { variant ->
-        if (variant.buildType == "release") {
-            val flavor = variant.productFlavors
-                .firstOrNull { it.first == "distribution" }?.second
-            if (flavor == "normal" || flavor == "foss") {
-                val sortPrefix = when (flavor) {
-                    "normal" -> "1"
-                    "foss" -> "2"
-                    else -> ""
-                }
-                if (sortPrefix.isNotEmpty()) {
-                    val versionName = android.defaultConfig.versionName ?: ""
-                    variant.outputs.forEach { output ->
-                        output.outputFileName.set("${sortPrefix}-APlayer-v${versionName}-${flavor}-release.apk")
-                    }
-                }
-            }
-        }
+    testOptions {
+        unitTests.isIncludeAndroidResources = true
+        unitTests.isReturnDefaultValues = true
     }
-}
-
-baselineProfile {
-    saveInSrc = true
-
-    warnings {
-        disabledVariants = false
-        maxAgpVersion = false
-    }
-//  variants {
-//      maybeCreate("normalRelease").apply {
-//          from(project(":baselineprofile"))
-//      }
-//  }
 }
 
 dependencies {
@@ -249,22 +137,12 @@ dependencies {
     implementation(libs.image.cropper)
     implementation(libs.xxpermissions)
     implementation(libs.sardine.android) {
-        // https://github.com/thegrizzlylabs/sardine-android/issues/70
-        // 上游已经exclude了，但是不知道为什么还是会有
-        // https://github.com/thegrizzlylabs/sardine-android/blob/d0af7ae8e7ee0654a763c4c6f638a5e98b1782e9/build.gradle#L46
         exclude(group = "xpp3", module = "xpp3")
     }
+    implementation(libs.smbj)
     implementation(libs.timber)
 
-    debugImplementation(libs.leakcanary)
-
-    val normalImplementation by configurations
-    normalImplementation(libs.bugly)
-
-    val googleImplementation by configurations
-    googleImplementation(libs.billingclient)
-    googleImplementation(libs.play.feature.delivery)
-    googleImplementation(libs.play.feature.delivery.ktx)
+    // debugImplementation(libs.leakcanary)
 
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -286,55 +164,7 @@ dependencies {
     ksp(libs.hilt.android.compiler)
 
     implementation(libs.androidx.profileinstaller)
-    "baselineProfile"(project(":baselineprofile"))
 
-    implementation(project(":taglib"))
-}
-
-// 上传mapping文件
-if (properties.getProperty("BUGLY_UPLOAD") == "1") {
-    val uploadMapping by tasks.registering(Exec::class) {
-        description = "upload bugly"
-        val jarFile = File(properties.getProperty("BUGLY_JAR") ?: "")
-        if (!jarFile.exists()) {
-            logger.warn("jarFile: ${jarFile.absolutePath} don't exist")
-            return@registering
-        }
-
-        val appId = properties.getProperty("BUGLY_APP_ID")
-        val appKey = properties.getProperty("BUGLY_APP_KEY")
-        if (appId.isNullOrEmpty() || appKey.isNullOrEmpty()) {
-            logger.warn("appId or appKey for bugly is invalid")
-            return@registering
-        }
-
-        val mappingFile =
-            file("${project.layout.buildDirectory.asFile.get()}/outputs/mapping/normalRelease/mapping.txt")
-        val args = listOf(
-            "-appid",
-            appId,
-            "-appkey",
-            appKey,
-            "-bundleid",
-            android.defaultConfig.applicationId ?: "",
-            "-version",
-            android.defaultConfig.versionName ?: "",
-            "-buildNo",
-            (android.defaultConfig.versionCode ?: 0).toString(),
-            "-platform",
-            "Android",
-            "-inputMapping",
-            mappingFile.absolutePath
-        )
-
-        commandLine = listOf("java", "-jar", jarFile.absolutePath) + args
-        standardOutput = System.out
-        errorOutput = System.out
-    }
-
-    tasks.whenTaskAdded {
-        if (name == "assembleNormalRelease") {
-            finalizedBy(uploadMapping)
-        }
-    }
+    testImplementation("junit:junit:4.13.2")
+    testImplementation("org.robolectric:robolectric:4.16.1")
 }

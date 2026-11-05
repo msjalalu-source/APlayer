@@ -62,6 +62,10 @@ object LanguageHelper {
 
   @JvmStatic
   fun setLocal(context: Context): Context {
+    val lang = if (current == -1) readLanguage(context) else current
+    if (lang == AUTO) {
+      return context
+    }
     return updateResources(context, selectLanguageLocale(context))
   }
 
@@ -70,7 +74,15 @@ object LanguageHelper {
 
     val res = context.resources
     val config = Configuration(res.configuration)
-    return if (Build.VERSION.SDK_INT >= 17) {
+    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+      config.setLocale(locale)
+      val display = runCatching { context.display }.getOrNull()
+      if (display != null) {
+        context.createDisplayContext(display).createConfigurationContext(config)
+      } else {
+        context.createConfigurationContext(config)
+      }
+    } else if (Build.VERSION.SDK_INT >= 17) {
       config.setLocale(locale)
       context.createConfigurationContext(config)
     } else {
