@@ -331,8 +331,8 @@ class UriFetcher @Inject constructor(
 
   private fun canDownloadCover(): Boolean {
     return when (settingPrefs.autoDownloadCover) {
-      DOWNLOAD_COVER_ALWAYS -> true
-      DOWNLOAD_COVER_WIFI_ONLY -> Util.isWifi(context)
+      DOWNLOAD_COVER_ALWAYS -> false
+      DOWNLOAD_COVER_WIFI_ONLY -> false
       else -> false
     }
   }

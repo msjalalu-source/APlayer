@@ -138,7 +138,6 @@ android {
     productFlavors {
         create("normal") {
             dimension = "distribution"
-            isDefault = true
             buildConfigField(
                 "String",
                 "BUGLY_APP_ID",
@@ -148,6 +147,7 @@ android {
         }
         create("foss") {
             dimension = "distribution"
+            isDefault = true
             buildConfigField("boolean", "ENABLE_UPDATE", "false")
         }
         create("google") {

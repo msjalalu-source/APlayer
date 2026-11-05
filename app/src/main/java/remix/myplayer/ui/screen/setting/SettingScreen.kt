@@ -265,9 +265,7 @@ private fun CoverPreferenceItems() {
 
   IgnoreMediaStoreLogic()
 
-  AutoDownloadLogic()
 
-  DownloadSourceLogic()
 }
 
 @Composable
