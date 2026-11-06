@@ -3,6 +3,7 @@
   <string name="app_name">APlayer</string>
 
   <string name="tab_song">Songs</string>
+  <string name="tab_favorite" translatable="false">Favorite</string>
   <string name="tab_album">Albums</string>
   <string name="tab_artist">Artists</string>
   <string name="tab_playlist">Playlists</string>

@@ -19,6 +19,7 @@ data class Library(
       TAG_GENRE -> R.string.tab_genre
       TAG_FOLDER -> R.string.tab_folder
       TAG_REMOTE -> R.string.tab_remote
+      TAG_FAVORITE -> R.string.tab_favorite
       else -> throw IllegalArgumentException("unknown tag: $tag")
     }
 
@@ -123,14 +124,16 @@ data class Library(
     const val TAG_PLAYLIST = 4
     const val TAG_FOLDER = 5
     const val TAG_REMOTE = 6
+    const val TAG_FAVORITE = 7
 
     val default = listOf(
       Library(TAG_SONG),
-      Library(TAG_ALBUM),
+      Library(TAG_FAVORITE),
+      Library(TAG_FOLDER),
       Library(TAG_ARTIST),
+      Library(TAG_ALBUM),
       Library(TAG_GENRE),
       Library(TAG_PLAYLIST),
-      Library(TAG_FOLDER),
       Library(TAG_REMOTE)
     )
 

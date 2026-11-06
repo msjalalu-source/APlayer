@@ -39,7 +39,8 @@ fun PlayListScreen() {
   val settingVM = settingViewModel
   val settingState by settingVM.settingsState.collectAsStateWithLifecycle()
 
-  val playlists by libraryViewModel.playLists.collectAsStateWithLifecycle()
+  val allPlaylists by libraryViewModel.playLists.collectAsStateWithLifecycle()
+  val playlists = allPlaylists.filter { !it.isFavorite() }
   val nav = LocalNavController.current
 
   val mode = settingState.library.playlistMode

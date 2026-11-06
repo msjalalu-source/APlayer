@@ -157,6 +157,9 @@ class SettingViewModel @Inject constructor(
     val libraries = try {
       Json.decodeFromString<List<Library>>(settingPrefs.libraryJson)
         .ifEmpty { Library.default }
+        .let { saved ->
+          if (saved.none { it.tag == Library.TAG_FAVORITE }) Library.default else saved
+        }
     } catch (_: Exception) {
       Library.default
     }
