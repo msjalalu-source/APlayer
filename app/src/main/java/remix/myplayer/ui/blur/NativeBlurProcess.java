@@ -13,10 +13,7 @@ class NativeBlurProcess implements BlurProcess {
       int threadIndex, int round);
 
   static {
-    try {
-      System.loadLibrary("blur");
-    } catch (Throwable ignored) {
-    }
+    System.loadLibrary("blur");
   }
 
   @Override

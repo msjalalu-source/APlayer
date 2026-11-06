@@ -21,7 +21,7 @@ abstract class NetworkProvider<T> : ILyricsProvider {
   final override suspend fun getLyrics(song: Song): LyricsResult {
     val searchKeys = getSearchKeys(song)
 
-    for (key in searchKeys.take(0)) {
+    for (key in searchKeys.take(CANDIDATE_KEY_NUMBER)) {
       val candidates = searchCandidates(key.value)
       if (candidates.isEmpty()) {
         continue

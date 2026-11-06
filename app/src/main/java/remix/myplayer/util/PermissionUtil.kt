@@ -14,21 +14,20 @@ import remix.myplayer.App
 import remix.myplayer.BuildConfig
 
 object PermissionUtil {
-  private fun has(context: Context?, vararg permissions: String): Boolean {
-    val ctx = context ?: runCatching { App.context }.getOrNull() ?: return false
+  private fun has(vararg permissions: String): Boolean {
     return permissions.all {
       ContextCompat.checkSelfPermission(
-        ctx,
+        App.context,
         it
       ) == PackageManager.PERMISSION_GRANTED
     }
   }
 
-  fun hasNecessaryPermission(context: Context? = null): Boolean {
+  fun hasNecessaryPermission(): Boolean {
     return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-      has(context, Permission.READ_MEDIA_AUDIO)
+      has(Permission.READ_MEDIA_AUDIO)
     } else {
-      has(context, Permission.READ_EXTERNAL_STORAGE)
+      has(Permission.READ_EXTERNAL_STORAGE)
     }
   }
 

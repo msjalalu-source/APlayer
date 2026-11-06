@@ -1,6 +1,0 @@
-{
-  "name": "APlayer",
-  "description": "A stylish, feature-rich offline and streaming music player for Android",
-  "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
-}

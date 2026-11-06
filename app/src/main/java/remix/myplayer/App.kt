@@ -27,7 +27,6 @@ class App : Application() {
   lateinit var appMigration: AppMigration
 
   override fun attachBaseContext(base: Context) {
-    context = this
     saveSystemCurrentLanguage()
     super.attachBaseContext(setLocal(base))
   }

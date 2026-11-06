@@ -108,7 +108,6 @@ private fun Portrait(isVisible: Boolean) {
     }
 
     PlayingIndicator(pagerState, swatch)
-    PlayingQuickBar(playbackState.isFavorite, swatch)
 
     PlayingSeekbarWithText(swatch)
 
