@@ -1,0 +1,73 @@
+name: Build Release APK
+
+on:
+  push:
+    branches: ['**']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Get taglib from the original author
+        run: |
+          SHA=$(git rev-parse HEAD:third-party/taglib 2>/dev/null || true)
+          rm -rf third-party/taglib
+          git clone https://github.com/rRemix/taglib.git third-party/taglib
+          if [ -n "$SHA" ]; then
+            git -C third-party/taglib checkout "$SHA" || echo "Pinned version not found, using latest main"
+          fi
+          git -C third-party/taglib submodule update --init --recursive
+          ls -la third-party/taglib
+          test -f third-party/taglib/build.gradle.kts
+
+      - name: Setup JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: gradle
+
+      - name: Prepare signing
+        run: |
+          cat > local.properties <<EOF
+          keystore.storeFile=${GITHUB_WORKSPACE}/app/Debug.jks
+          keystore.storePassword=123456
+          keystore.keyAlias=Debug
+          keystore.keyPassword=123456
+          EOF
+
+      - name: Build release APK (shrunk)
+        run: |
+          chmod +x gradlew
+          ./gradlew :app:assembleFossRelease
+          mkdir -p out
+          cp "$(ls app/build/outputs/apk/foss/release/*.apk | head -1)" out/APlayer-shrunk.apk
+
+      - name: Build release APK (no shrink)
+        run: |
+          sed -i 's/isMinifyEnabled = true/isMinifyEnabled = false/; s/isShrinkResources = true/isShrinkResources = false/' app/build.gradle.kts
+          ./gradlew :app:assembleFossRelease
+          cp "$(ls app/build/outputs/apk/foss/release/*.apk | head -1)" out/APlayer-no-shrink.apk
+
+      - name: Publish to Releases
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release delete latest --repo "$GITHUB_REPOSITORY" --cleanup-tag --yes || true
+          gh release create latest out/*.apk \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" \
+            --title "APlayer latest build" \
+            --notes "Two APKs: APlayer-shrunk.apk (smaller) and APlayer-no-shrink.apk (safer). Commit $GITHUB_SHA"
