@@ -28,3 +28,13 @@
 
 # 修复Android5.0 VerifyError
 -keepclassmembers class androidx.compose.ui.platform.** { *; }
+
+# --- custom keep rules (fork) ---
+-keepattributes *Annotation*,Signature,InnerClasses,EnclosingMethod,RuntimeVisibleAnnotations,SourceFile,LineNumberTable
+-keep class remix.myplayer.** { *; }
+-keep class com.kyant.taglib.** { *; }
+-keep class androidx.media3.decoder.** { *; }
+-keepclasseswithmembernames class * {
+    native <methods>;
+}
+-dontwarn javax.annotation.**
